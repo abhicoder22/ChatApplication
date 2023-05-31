@@ -1,32 +1,60 @@
-import React, {useState} from 'react';
-import {View, Text, SafeAreaView, StyleSheet} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import {firebase} from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignIn = () => {
-    firebase
-      .auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(email => {
-        console.log('logged in', email.user);
-        navigation.navigate('Chat');
-      })
-      .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          console.log('email is already in use');
-        }
+  useEffect(() => {
+    checkLoggedinUser();
+  }, []);
 
-        if (error.code === 'auth/invalid-email') {
-          console.log('email address is invalid!');
+  const checkLoggedinUser = async () => {
+    const userToken = await AsyncStorage.getItem('userToken');
+    if (userToken) {
+      navigation.navigate('Chat');
+    }
+  };
 
-          console.log(error);
-        }
-      });
+  const handleSignIn = async () => {
+    try {
+      if (email.trim() === '' && password.trim() === '') {
+        console.log('Please fill the details');
+        return;
+      } else if (email.trim() === '') {
+        console.log('Email is required');
+        return;
+      } else if (password.trim() === '') {
+        console.log('Password is required');
+        return;
+      }
+
+      const response = await firebase
+        .auth()
+        .signInWithEmailAndPassword(email, password);
+      console.log('Logged in', response.user.email);
+
+      await AsyncStorage.setItem('userToken', response.user.uid);
+      navigation.navigate('Chat');
+    } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        console.log('Email is already in use');
+      }
+      if (error.code === 'auth/invalid-email') {
+        console.log('Email address is invalid');
+      }
+      console.log(error);
+    }
   };
 
   return (
@@ -42,6 +70,35 @@ const LoginScreen = ({navigation}) => {
           changeText={text => setPassword(text)}
         />
         <Button name="Login" click={handleSignIn} />
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: 15,
+          }}>
+          <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+            Don't have an account?
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'skyblue',
+              height: 30,
+              width: 70,
+              marginLeft: 5,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => navigation.navigate('Register')}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: 'bold',
+                color: 'white',
+              }}>
+              Register
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );

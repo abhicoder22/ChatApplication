@@ -1,5 +1,11 @@
 import React, {createRef, useState} from 'react';
-import {View, Text, SafeAreaView, StyleSheet, Alert} from 'react-native';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import {firebase} from '@react-native-firebase/auth';
@@ -69,6 +75,36 @@ const RegisterScreen = ({navigation}) => {
           changeText={text => setConpassword(text)}
         />
         <Button name="Register" click={handleSignUp} />
+
+        <View
+          style={{
+            flexDirection: 'row',
+            marginTop: 15,
+          }}>
+          <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+            Already have an account?
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'skyblue',
+              height: 30,
+              width: 70,
+              marginLeft: 5,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => navigation.navigate('Login')}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: 'bold',
+                color: 'white',
+              }}>
+              Login
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
