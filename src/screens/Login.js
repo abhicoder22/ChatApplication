@@ -43,9 +43,15 @@ const LoginScreen = ({navigation}) => {
         .auth()
         .signInWithEmailAndPassword(email, password);
       console.log('Logged in', response.user.email);
+      const myId = response.user.uid;
+      const userId = firebase.auth().currentUser.uid;
+      await AsyncStorage.setItem('userToken', myId);
+      navigation.navigate('Chat', {
+        myId,
+        userId,
+      });
 
-      await AsyncStorage.setItem('userToken', response.user.uid);
-      navigation.navigate('Chat');
+      console.log(myId);
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
         console.log('Email is already in use');
