@@ -46,6 +46,8 @@ const LoginScreen = ({navigation}) => {
       const myId = response.user.uid;
       const userId = firebase.auth().currentUser.uid;
       await AsyncStorage.setItem('userToken', myId);
+      await AsyncStorage.setItem('userIdd', userId);
+
       navigation.navigate('Chat', {
         myId,
         userId,
