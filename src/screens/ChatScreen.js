@@ -9,19 +9,38 @@ import {
 } from 'react-native';
 import {firebase} from '@react-native-firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Bubble, GiftedChat} from 'react-native-gifted-chat';
+import {Bubble, GiftedChat, Send} from 'react-native-gifted-chat';
 import logoutIcon from '../Assets/logout.png';
 import attachIcon from '../Assets/attach.png';
 import msgIcon from '../Assets/chat.png';
+import sendIcon from '../Assets/send.png';
 import {useRoute} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
+import BottomSheet from '../components/BottomSheet';
 
 const ChatScreen = ({navigation}) => {
   const [messages, setMessages] = useState([]);
   const [myId, setMyId] = useState('');
   const [userId, setUserId] = useState('');
   const route = useRoute();
-  const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
+  const [isDialogVisible, setDialogVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleImageSelected = imageUri => {
+    console.log('profile image', imageUri);
+
+    setSelectedImage(imageUri);
+    selectedPhoto(imageUri);
+    setDialogVisible(false);
+  };
+
+  const handleProfileImage = () => {
+    setDialogVisible(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogVisible(false);
+  };
 
   useEffect(() => {
     const backAction = () => {
@@ -72,16 +91,12 @@ const ChatScreen = ({navigation}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{flexDirection: 'row', margin: 5}}>
+        <View style={{}}>
           <TouchableOpacity onPress={handleLogout}>
             <Image
               style={{height: 30, width: 30, marginRight: 8}}
               source={logoutIcon}
             />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setBottomSheetVisible(true)}>
-            <Image style={{height: 30, width: 30}} source={attachIcon} />
           </TouchableOpacity>
         </View>
       ),
@@ -120,6 +135,7 @@ const ChatScreen = ({navigation}) => {
     setMessages(previousMessages =>
       GiftedChat.append(previousMessages, messagesList),
     );
+
     firestore()
       .collection('chats')
       .doc('123456')
@@ -149,6 +165,37 @@ const ChatScreen = ({navigation}) => {
         user={{
           _id: myId,
         }}
+        renderSend={props => {
+          return (
+            <View
+              style={{alignItems: 'center', height: 50, flexDirection: 'row'}}>
+              <TouchableOpacity onPress={handleProfileImage}>
+                <Image
+                  style={{height: 30, width: 30, marginRight: 10}}
+                  source={attachIcon}
+                />
+              </TouchableOpacity>
+              <Send {...props} containerStyle={{justifyContent: 'center'}}>
+                <View
+                  style={{
+                    height: 45,
+                    width: 45,
+                    borderRadius: 40,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 10,
+                    backgroundColor: '#2d93f4',
+                    paddingStart: 4,
+                  }}>
+                  <Image
+                    style={{height: 22, width: 22, tintColor: 'white'}}
+                    source={sendIcon}
+                  />
+                </View>
+              </Send>
+            </View>
+          );
+        }}
         renderBubble={props => {
           return (
             <Bubble
@@ -161,6 +208,12 @@ const ChatScreen = ({navigation}) => {
             />
           );
         }}
+      />
+
+      <BottomSheet
+        visible={isDialogVisible}
+        onClose={handleCloseDialog}
+        onImageSelected={handleImageSelected}
       />
     </View>
   );
