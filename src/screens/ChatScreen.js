@@ -17,6 +17,7 @@ import sendIcon from '../Assets/send.png';
 import {useRoute} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import BottomSheet from '../components/BottomSheet';
+import storage from '@react-native-firebase/firestore';
 
 const ChatScreen = ({navigation}) => {
   const [messages, setMessages] = useState([]);
@@ -30,7 +31,7 @@ const ChatScreen = ({navigation}) => {
     console.log('profile image', imageUri);
 
     setSelectedImage(imageUri);
-    selectedPhoto(imageUri);
+    uploadImage(imageUri);
     setDialogVisible(false);
   };
 
@@ -124,26 +125,42 @@ const ChatScreen = ({navigation}) => {
     });
   }, []);
 
-  const onSend = messagesList => {
-    console.log(messagesList);
-    const message = messagesList[0];
-    const myMessage = {
-      ...message,
-      senderId: myId,
-      receiverId: userId,
-    };
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, messagesList),
-    );
+  const onSend = useCallback(
+    messagesList => {
+      console.log(messagesList);
+      const message = messagesList[0];
+      const myMessage = {
+        ...message,
+        senderId: myId,
+        receiverId: userId,
+        image: selectedImage || '',
+      };
+      setMessages(previousMessages =>
+        GiftedChat.append(previousMessages, myMessage),
+      );
 
-    firestore()
-      .collection('chats')
-      .doc('123456')
-      .collection('messages')
-      .add({
-        ...myMessage,
-        createdAt: new Date(),
-      });
+      firestore()
+        .collection('chats')
+        .doc('123456')
+        .collection('messages')
+        .add({
+          ...myMessage,
+          createdAt: new Date(),
+        });
+      setSelectedImage(null);
+    },
+    [myId, userId, selectedImage],
+  );
+
+  const uploadImage = async imageUri => {
+    const reference = storage().ref(imageUri.assets[0].filename);
+    const pathToFile = imageUri.assets[0].uri;
+    await reference.putFile(pathToFile);
+    const url = await storage()
+      .ref(imageUri.assets[0].fileName)
+      .getDownloadURL();
+    console.log('url', url, reference);
+    setSelectedImage(url);
   };
 
   const handleLogout = async () => {
@@ -165,6 +182,7 @@ const ChatScreen = ({navigation}) => {
         user={{
           _id: myId,
         }}
+        alwaysShowSend
         renderSend={props => {
           return (
             <View
@@ -202,7 +220,9 @@ const ChatScreen = ({navigation}) => {
               {...props}
               wrapperStyle={{
                 left: {
-                  backgroundColor: 'gray',
+                  backgroundColor: props.currentMessage.image
+                    ? 'transparent'
+                    : 'gray',
                 },
               }}
             />
